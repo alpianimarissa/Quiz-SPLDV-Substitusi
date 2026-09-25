@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Interaktif SPLDV - Metode Substitusi (Acak Opsi)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .math-font { font-family: 'Fira Code', monospace; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col selection:bg-indigo-100 selection:text-indigo-800">
+
+    <!-- Header Navigation -->
+    <header class="bg-indigo-900 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 p-2 rounded-lg shadow">
+                    <i class="fa-solid fa-calculator text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold tracking-tight">Quiz Interaktif SPLDV</h1>
+                    <p class="text-xs text-indigo-200">Metode Substitusi &bull; 30 Soal (Opsi Jawaban Diacak)</p>
+                </div>
+            </div>
+
+            <!-- Header Quick Stats -->
+            <div class="flex items-center space-x-3 bg-indigo-950 px-3.5 py-1.5 rounded-lg border border-indigo-700/50 text-xs md:text-sm">
+                <div class="flex items-center space-x-1.5">
+                    <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                    <span>Benar: <strong id="header-correct" class="text-emerald-400 font-bold">0</strong></span>
+                </div>
+                <div class="h-4 w-px bg-indigo-700"></div>
+                <div class="flex items-center space-x-1.5">
+                    <i class="fa-solid fa-circle-xmark text-rose-400"></i>
+                    <span>Salah: <strong id="header-wrong" class="text-rose-400 font-bold">0</strong></span>
+                </div>
+                <div class="h-4 w-px bg-indigo-700"></div>
+                <div class="flex items-center space-x-1.5">
+                    <i class="fa-solid fa-spinner text-amber-400"></i>
+                    <span>Progres: <strong id="header-progress" class="text-amber-400 font-bold">0/30</strong></span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center space-x-2">
+                <button onclick="openResetModal()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span class="hidden sm:inline">Reset Quiz</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Navigation Palette & Filter (4 Cols on LG) -->
+        <aside class="lg:col-span-4 space-y-4">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sticky top-20">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                        <i class="fa-solid fa-grip text-indigo-600"></i>
+                        <span>Navigasi Soal</span>
+                    </h2>
+                    <span id="completion-badge" class="bg-indigo-50 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-full border border-indigo-200">
+                        0%
+                    </span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-100 rounded-full h-2.5 mb-4 overflow-hidden border border-slate-200/50">
+                    <div id="progress-bar-fill" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300 w-0"></div>
+                </div>
+
+                <!-- Filter Tabs for Nav Palette -->
+                <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg text-xs mb-3 font-medium text-slate-600">
+                    <button onclick="setFilter('all')" id="filter-all" class="flex-1 py-1 text-center rounded bg-white text-indigo-700 shadow-sm font-bold">Semua</button>
+                    <button onclick="setFilter('unanswered')" id="filter-unanswered" class="flex-1 py-1 text-center rounded hover:text-slate-900 transition">Belum</button>
+                    <button onclick="setFilter('correct')" id="filter-correct" class="flex-1 py-1 text-center rounded hover:text-slate-900 transition">Benar</button>
+                    <button onclick="setFilter('wrong')" id="filter-wrong" class="flex-1 py-1 text-center rounded hover:text-slate-900 transition">Salah</button>
+                </div>
+
+                <!-- Grid Buttons 1 - 30 -->
+                <div id="nav-grid" class="grid grid-cols-5 gap-2 max-h-[360px] overflow-y-auto pr-1 custom-scrollbar">
+                    <!-- Dynamic Palette buttons via JS -->
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-500 space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 rounded bg-slate-100 border border-slate-300 inline-block"></span>
+                        <span>Belum dijawab</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 rounded bg-emerald-500 inline-block"></span>
+                        <span>Jawaban Benar</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 rounded bg-rose-500 inline-block"></span>
+                        <span>Jawaban Salah</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Column: Active Question View (8 Cols on LG) -->
+        <section class="lg:col-span-8 space-y-4">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative">
+                
+                <!-- Category Tag & Question Indicator -->
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center space-x-2">
+                        <span id="question-number-badge" class="bg-indigo-600 text-white font-bold text-xs px-3 py-1 rounded-md shadow-sm">
+                            Soal 1 dari 30
+                        </span>
+                        <span id="question-type-badge" class="bg-slate-100 text-slate-700 font-semibold text-xs px-2.5 py-1 rounded-md border border-slate-200">
+                            Soal Langsung
+                        </span>
+                        <span class="bg-amber-50 text-amber-700 font-semibold text-[11px] px-2 py-0.5 rounded border border-amber-200 hidden sm:inline-flex items-center gap-1">
+                            <i class="fa-solid fa-shuffle text-[10px]"></i> Opsi Diacak
+                        </span>
+                    </div>
+
+                    <div id="status-icon-indicator" class="hidden">
+                        <!-- Correct / Wrong badge dynamically set -->
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <div class="mb-6">
+                    <div id="question-text" class="text-slate-800 font-medium text-base md:text-lg leading-relaxed">
+                        <!-- Question content injected here -->
+                    </div>
+                    <div id="question-math-box" class="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-lg math-font text-indigo-900 text-sm md:text-base font-bold hidden shadow-inner">
+                        <!-- Optional Math Equations -->
+                    </div>
+                </div>
+
+                <!-- Options List (A, B, C, D) -->
+                <div id="options-container" class="space-y-3 mb-6">
+                    <!-- Dynamic Options -->
+                </div>
+
+                <!-- Explanation Box (Appears after answering) -->
+                <div id="explanation-card" class="hidden mt-6 p-4 rounded-xl bg-indigo-50/70 border border-indigo-200 text-slate-800 space-y-2">
+                    <div class="flex items-center space-x-2 text-indigo-900 font-bold text-sm">
+                        <i class="fa-solid fa-lightbulb text-amber-500 text-base"></i>
+                        <span>Pembahasan Langkah Substitusi:</span>
+                    </div>
+                    <div id="explanation-text" class="math-font text-xs md:text-sm text-slate-700 leading-relaxed whitespace-pre-line bg-white p-3.5 rounded-lg border border-indigo-100 shadow-sm">
+                        <!-- Step-by-step math proof -->
+                    </div>
+                </div>
+
+                <!-- Footer Controls (Prev, Next) -->
+                <div class="mt-8 pt-4 border-t border-slate-100 flex justify-between items-center">
+                    <button id="btn-prev" onclick="prevQuestion()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs md:text-sm rounded-lg transition flex items-center space-x-2 disabled:opacity-40 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Sebelumnya</span>
+                    </button>
+
+                    <span class="text-xs text-slate-400 font-medium hidden sm:inline flex items-center gap-1">
+                        <i class="fa-solid fa-floppy-disk"></i> Otomatis tersimpan
+                    </span>
+
+                    <button id="btn-next" onclick="nextQuestion()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs md:text-sm rounded-lg transition flex items-center space-x-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm">
+                        <span>Berikutnya</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Custom Modal for Reset Confirmation -->
+    <div id="reset-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-all">
+            <div class="flex items-center space-x-3 text-rose-600 mb-3">
+                <div class="bg-rose-100 p-2.5 rounded-xl">
+                    <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Reset Seluruh Quiz?</h3>
+            </div>
+            <p class="text-xs md:text-sm text-slate-600 leading-relaxed mb-6">
+                Semua jawaban yang tersimpan akan dihapus dan opsi jawaban pada setiap soal akan <strong>diacak ulang</strong>. Apakah Anda yakin ingin mengulang?
+            </p>
+            <div class="flex space-x-3 justify-end">
+                <button onclick="closeResetModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg transition">
+                    Batal
+                </button>
+                <button onclick="executeReset()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs rounded-lg transition shadow-sm">
+                    Ya, Reset Quiz
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ==========================================================================
+           DATA RAW SOAL SPLDV (30 SOAL: 15 LANGSUNG, 15 SOAL CERITA)
+           Tiap soal memiliki 1 jawaban benar (isCorrect: true) dan 3 jawaban salah.
+           ========================================================================== */
+        const rawQuestions = [
+            // --- 15 SOAL LANGSUNG (1-15) ---
+            {
+                id: 1,
+                type: 'Soal Langsung',
+                question: 'Tentukan Himpunan Penyelesaian (HP) dari sistem persamaan linear dua variabel berikut dengan metode substitusi:',
+                math: '(1) x + y = 8\n(2) x - y = 2',
+                options: [
+                    { text: 'HP = {(5, 3)}', isCorrect: true },
+                    { text: 'HP = {(6, 2)}', isCorrect: false },
+                    { text: 'HP = {(4, 4)}', isCorrect: false },
+                    { text: 'HP = {(3, 5)}', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (1): y = 8 - x\n2. Substitusi y ke pers (2):\n   x - (8 - x) = 2\n   x - 8 + x = 2\n   2x = 10 -> x = 5\n3. Substitusi x = 5 ke y = 8 - x:\n   y = 8 - 5 = 3\nJadi, HP = {(5, 3)}.'
+            },
+            {
+                id: 2,
+                type: 'Soal Langsung',
+                question: 'Selesaikan SPLDV berikut untuk menemukan nilai x dan y:',
+                math: '(1) 2x + y = 10\n(2) y = 4',
+                options: [
+                    { text: 'HP = {(3, 4)}', isCorrect: true },
+                    { text: 'HP = {(4, 3)}', isCorrect: false },
+                    { text: 'HP = {(2, 4)}', isCorrect: false },
+                    { text: 'HP = {(3, 2)}', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Pers (2) sudah eksplisit: y = 4\n2. Substitusi y = 4 ke pers (1):\n   2x + 4 = 10\n   2x = 6 -> x = 3\nJadi, HP = {(3, 4)}.'
+            },
+            {
+                id: 3,
+                type: 'Soal Langsung',
+                question: 'Tentukan pasangan (x, y) yang memenuhi sistem persamaan berikut:',
+                math: '(1) y = 2x + 1\n(2) 3x + y = 11',
+                options: [
+                    { text: 'HP = {(2, 5)}', isCorrect: true },
+                    { text: 'HP = {(1, 3)}', isCorrect: false },
+                    { text: 'HP = {(3, 7)}', isCorrect: false },
+                    { text: 'HP = {(5, 2)}', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Substitusi y = 2x + 1 ke pers (2):\n   3x + (2x + 1) = 11\n   5x + 1 = 11\n   5x = 10 -> x = 2\n2. Substitusi x = 2 ke y = 2x + 1:\n   y = 2(2) + 1 = 5\nJadi, HP = {(2, 5)}.'
+            },
+            {
+                id: 4,
+                type: 'Soal Langsung',
+                question: 'Carilah Himpunan Penyelesaian dari SPLDV berikut:',
+                math: '(1) x = 3y - 2\n(2) 2x + y = 10',
+                options: [
+                    { text: 'HP = {(4, 2)}', isCorrect: true },
+                    { text: 'HP = {(2, 4)}', isCorrect: false },
+                    { text: 'HP = {(1, 1)}', isCorrect: false },
+                    { text: 'HP = {(7, 3)}', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Substitusi x = 3y - 2 ke pers (2):\n   2(3y - 2) + y = 10\n   6y - 4 + y = 10\n   7y = 14 -> y = 2\n2. Substitusi y = 2 ke x = 3y - 2:\n   x = 3(2) - 2 = 4\nJadi, HP = {(4, 2)}.'
+            },
+            {
+                id: 5,
+                type: 'Soal Langsung',
+                question: 'Tentukan Himpunan Penyelesaian dari SPLDV di bawah ini:',
+                math: '(1) x = y + 1\n(2) 3x + 2y = 18',
+                options: [
+                    { text: 'HP = {(4, 3)}', isCorrect: true },
+                    { text: 'HP = {(3, 4)}', isCorrect: false },
+                    { text: 'HP = {(5, 2)}', isCorrect: false },
+                    { text: 'HP = {(2, 5)}', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Substitusi x = y + 1 ke pers (2):\n   3(y + 1) + 2y = 18\n   3y + 3 + 2y = 18\n   5y = 15 -> y = 3\n2. Substitusi y = 3 ke x = y + 1:\n   x = 3 + 1 = 4\nJadi, HP = {(4, 3)}.'
+            },
+            {
+                id: 6,
+                type: 'Soal Langsung',
+                question: 'Tentukan nilai x dan y dari sistem persamaan berikut:',
+                math: '(1) x + 2y = 10\n(2) 2x - y = 5',
+                options: [
+                    { text: 'HP = {(4, 3)}', isCorrect: true },
+                    { text: 'HP = {(2, 4)}', isCorrect: false },
+                    { text: 'HP = {(3, 4)}', isCorrect: false },
+                    { text: 'HP = {(5, 0)}', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (1): x = 10 - 2y\n2. Substitusi x ke pers (2):\n   2(10 - 2y) - y = 5\n   20 - 4y - y = 5\n   -5y = -15 -> y = 3\n3. Substitusi y = 3 ke x = 10 - 2y:\n   x = 10 - 2(3) = 4\nJadi, HP = {(4, 3)}.'
+            },
+            {
+                id: 7,
+                type: 'Soal Langsung',
+                question: 'Selesaikan SPLDV berikut:',
+                math: '(1) x + y = 8\n(2) 2x - 3y = 1',
+                options: [
+                    { text: 'HP = {(5, 3)}', isCorrect: true },
+                    { text: 'HP = {(3, 5)}', isCorrect: false },
+                    { text: 'HP = {(4, 4)}', isCorrect: false },
+                    { text: 'HP = {(6, 2)}', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (1): x = 8 - y\n2. Substitusi x ke pers (2):\n   2(8 - y) - 3y = 1\n   16 - 2y - 3y = 1\n   -5y = -15 -> y = 3\n3. Substitusi y = 3 ke x = 8 - y:\n   x = 8 - 3 = 5\nJadi, HP = {(5, 3)}.'
+            },
+            {
+                id: 8,
+                type: 'Soal Langsung',
+                question: 'Tentukan Himpunan Penyelesaian dari SPLDV berikut:',
+                math: '(1) 3x + y = 13\n(2) 2x + 3y = 18',
+                options: [
+                    { text: 'HP = {(3, 4)}', isCorrect: true },
+                    { text: 'HP = {(4, 1)}', isCorrect: false },
+                    { text: 'HP = {(2, 7)}', isCorrect: false },
+                    { text: 'HP = {(5, 2)}', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (1): y = 13 - 3x\n2. Substitusi y ke pers (2):\n   2x + 3(13 - 3x) = 18\n   2x + 39 - 9x = 18\n   -7x = -21 -> x = 3\n3. Substitusi x = 3 ke y = 13 - 3x:\n   y = 13 - 3(3) = 4\nJadi, HP = {(3, 4)}.'
+            },
+            {
+                id: 9,
+                type: 'Soal Langsung',
+                question: 'Carilah HP dari sistem persamaan berikut:',
+                math: '(1) x + 3y = 15\n(2) 2x - y = 2',
+                options: [
+                    { text: 'HP = {(3, 4)}', isCorrect: true },
+                    { text: 'HP = {(6, 3)}', isCorrect: false },
+                    { text: 'HP = {(0, 5)}', isCorrect: false },
+                    { text: 'HP = {(4, 3)}', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (1): x = 15 - 3y\n2. Substitusi x ke pers (2):\n   2(15 - 3y) - y = 2\n   30 - 6y - y = 2\n   -7y = -28 -> y = 4\n3. Substitusi y = 4 ke x = 15 - 3y:\n   x = 15 - 3(4) = 3\nJadi, HP = {(3, 4)}.'
+            },
+            {
+                id: 10,
+                type: 'Soal Langsung',
+                question: 'Tentukan penyelesaian dari sistem persamaan linear dua variabel berikut:',
+                math: '(1) 4x + y = 14\n(2) 3x + 2y = 13',
+                options: [
+                    { text: 'HP = {(3, 2)}', isCorrect: true },
+                    { text: 'HP = {(2, 6)}', isCorrect: false },
+                    { text: 'HP = {(1, 10)}', isCorrect: false },
+                    { text: 'HP = {(4, -2)}', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (1): y = 14 - 4x\n2. Substitusi y ke pers (2):\n   3x + 2(14 - 4x) = 13\n   3x + 28 - 8x = 13\n   -5x = -15 -> x = 3\n3. Substitusi x = 3 ke y = 14 - 4x:\n   y = 14 - 4(3) = 2\nJadi, HP = {(3, 2)}.'
+            },
+            {
+                id: 11,
+                type: 'Soal Langsung',
+                question: 'Selesaikan SPLDV berikut:',
+                math: '(1) x - 2y = 1\n(2) 2x + 5y = 11',
+                options: [
+                    { text: 'HP = {(3, 1)}', isCorrect: true },
+                    { text: 'HP = {(5, 2)}', isCorrect: false },
+                    { text: 'HP = {(1, 0)}', isCorrect: false },
+                    { text: 'HP = {(2, 3)}', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (1): x = 2y + 1\n2. Substitusi x ke pers (2):\n   2(2y + 1) + 5y = 11\n   4y + 2 + 5y = 11\n   9y = 9 -> y = 1\n3. Substitusi y = 1 ke x = 2y + 1:\n   x = 2(1) + 1 = 3\nJadi, HP = {(3, 1)}.'
+            },
+            {
+                id: 12,
+                type: 'Soal Langsung',
+                question: 'Tentukan Himpunan Penyelesaian dari SPLDV di bawah ini:',
+                math: '(1) y = -x + 6\n(2) 2x + 3y = 14',
+                options: [
+                    { text: 'HP = {(4, 2)}', isCorrect: true },
+                    { text: 'HP = {(2, 4)}', isCorrect: false },
+                    { text: 'HP = {(3, 3)}', isCorrect: false },
+                    { text: 'HP = {(5, 1)}', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Substitusi y = -x + 6 ke pers (2):\n   2x + 3(-x + 6) = 14\n   2x - 3x + 18 = 14\n   -x = -4 -> x = 4\n2. Substitusi x = 4 ke y = -x + 6:\n   y = -4 + 6 = 2\nJadi, HP = {(4, 2)}.'
+            },
+            {
+                id: 13,
+                type: 'Soal Langsung',
+                question: 'Jika (x, y) adalah penyelesaian dari SPLDV berikut, tentukan nilainya:',
+                math: '(1) 3x - y = 7\n(2) x + 2y = 7',
+                options: [
+                    { text: 'HP = {(3, 2)}', isCorrect: true },
+                    { text: 'HP = {(1, 4)}', isCorrect: false },
+                    { text: 'HP = {(2, -1)}', isCorrect: false },
+                    { text: 'HP = {(4, 5)}', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (1): y = 3x - 7\n2. Substitusi y ke pers (2):\n   x + 2(3x - 7) = 7\n   x + 6x - 14 = 7\n   7x = 21 -> x = 3\n3. Substitusi x = 3 ke y = 3x - 7:\n   y = 3(3) - 7 = 2\nJadi, HP = {(3, 2)}.'
+            },
+            {
+                id: 14,
+                type: 'Soal Langsung',
+                question: 'Tentukan nilai x dan y yang memenuhi SPLDV berikut:',
+                math: '(1) x - y = -3\n(2) 2x + 3y = 19',
+                options: [
+                    { text: 'HP = {(2, 5)}', isCorrect: true },
+                    { text: 'HP = {(5, 2)}', isCorrect: false },
+                    { text: 'HP = {(1, 4)}', isCorrect: false },
+                    { text: 'HP = {(3, 6)}', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (1): x = y - 3\n2. Substitusi x ke pers (2):\n   2(y - 3) + 3y = 19\n   2y - 6 + 3y = 19\n   5y = 25 -> y = 5\n3. Substitusi y = 5 ke x = y - 3:\n   x = 5 - 3 = 2\nJadi, HP = {(2, 5)}.'
+            },
+            {
+                id: 15,
+                type: 'Soal Langsung',
+                question: 'Selesaikan SPLDV berikut untuk mendapatkan nilai (x, y):',
+                math: '(1) y = x - 6\n(2) 5x + 2y = 16',
+                options: [
+                    { text: 'HP = {(4, -2)}', isCorrect: true },
+                    { text: 'HP = {(2, -4)}', isCorrect: false },
+                    { text: 'HP = {(6, 0)}', isCorrect: false },
+                    { text: 'HP = {(3, -3)}', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Substitusi y = x - 6 ke pers (2):\n   5x + 2(x - 6) = 16\n   5x + 2x - 12 = 16\n   7x = 28 -> x = 4\n2. Substitusi x = 4 ke y = x - 6:\n   y = 4 - 6 = -2\nJadi, HP = {(4, -2)}.'
+            },
+
+            // --- 15 SOAL CERITA (16-30) ---
+            {
+                id: 16,
+                type: 'Soal Cerita',
+                question: 'Di toko alat tulis, harga 2 buku tulis dan 1 pensil adalah Rp10.000, sedangkan harga 1 buku tulis dan 3 pensil adalah Rp10.000. Berapakah harga 1 buku tulis (x) dan 1 pensil (y)?',
+                math: 'Model Matematika:\n(1) 2x + y = 10.000\n(2) x + 3y = 10.000',
+                options: [
+                    { text: 'Buku = Rp4.000, Pensil = Rp2.000', isCorrect: true },
+                    { text: 'Buku = Rp3.000, Pensil = Rp2.000', isCorrect: false },
+                    { text: 'Buku = Rp5.000, Pensil = Rp1.000', isCorrect: false },
+                    { text: 'Buku = Rp4.500, Pensil = Rp1.500', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (1): y = 10.000 - 2x\n2. Substitusi y ke pers (2):\n   x + 3(10.000 - 2x) = 10.000\n   x + 30.000 - 6x = 10.000\n   -5x = -20.000 -> x = 4.000\n3. y = 10.000 - 2(4.000) = 2.000\nJadi, Buku = Rp4.000, Pensil = Rp2.000.'
+            },
+            {
+                id: 17,
+                type: 'Soal Cerita',
+                question: 'Jumlah dua buah bilangan positif adalah 20. Jika selisih kedua bilangan tersebut adalah 4, tentukan kedua bilangan tersebut.',
+                math: 'Model Matematika:\n(1) x + y = 20\n(2) x - y = 4',
+                options: [
+                    { text: 'Bilangan tersebut adalah 12 dan 8', isCorrect: true },
+                    { text: 'Bilangan tersebut adalah 14 dan 6', isCorrect: false },
+                    { text: 'Bilangan tersebut adalah 11 dan 9', isCorrect: false },
+                    { text: 'Bilangan tersebut adalah 13 dan 7', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (2): x = y + 4\n2. Substitusi x ke pers (1):\n   (y + 4) + y = 20\n   2y + 4 = 20\n   2y = 16 -> y = 8\n3. x = 8 + 4 = 12\nJadi, kedua bilangan tersebut adalah 12 dan 8.'
+            },
+            {
+                id: 18,
+                type: 'Soal Cerita',
+                question: 'Di sebuah tempat parkir terdapat 30 kendaraan yang terdiri dari mobil (roda 4) dan sepeda motor (roda 2). Jika jumlah total roda seluruhnya adalah 90 roda, berapa banyak mobil (x) dan sepeda motor (y)?',
+                math: 'Model Matematika:\n(1) x + y = 30\n(2) 4x + 2y = 90',
+                options: [
+                    { text: '15 Mobil dan 15 Motor', isCorrect: true },
+                    { text: '20 Mobil dan 10 Motor', isCorrect: false },
+                    { text: '10 Mobil dan 20 Motor', isCorrect: false },
+                    { text: '25 Mobil dan 5 Motor', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (1): y = 30 - x\n2. Substitusi y ke pers (2):\n   4x + 2(30 - x) = 90\n   4x + 60 - 2x = 90\n   2x = 30 -> x = 15\n3. y = 30 - 15 = 15\nJadi, terdapat 15 Mobil dan 15 Motor.'
+            },
+            {
+                id: 19,
+                type: 'Soal Cerita',
+                question: 'Umur Ayah (x) saat ini adalah 3 kali umur Budi (y). Jika selisih umur Ayah dan Budi adalah 28 tahun, berapakah umur Budi?',
+                math: 'Model Matematika:\n(1) x = 3y\n(2) x - y = 28',
+                options: [
+                    { text: '14 tahun', isCorrect: true },
+                    { text: '10 tahun', isCorrect: false },
+                    { text: '12 tahun', isCorrect: false },
+                    { text: '16 tahun', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Substitusi x = 3y ke pers (2):\n   3y - y = 28\n   2y = 28 -> y = 14\nJadi, umur Budi adalah 14 tahun.'
+            },
+            {
+                id: 20,
+                type: 'Soal Cerita',
+                question: 'Keliling sebuah persegi panjang adalah 32 cm. Jika panjangnya (x) 4 cm lebihnya dari lebarnya (y), berapakah luas persegi panjang tersebut?',
+                math: 'Model Matematika:\n(1) 2x + 2y = 32  ->  x + y = 16\n(2) x = y + 4',
+                options: [
+                    { text: '60 cm²', isCorrect: true },
+                    { text: '48 cm²', isCorrect: false },
+                    { text: '52 cm²', isCorrect: false },
+                    { text: '56 cm²', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Substitusi x = y + 4 ke pers (1):\n   (y + 4) + y = 16\n   2y + 4 = 16 -> 2y = 12 -> y = 6 cm\n2. x = 6 + 4 = 10 cm\n3. Luas = Panjang x Lebar = 10 x 6 = 60 cm².'
+            },
+            {
+                id: 21,
+                type: 'Soal Cerita',
+                question: 'Andi membeli 3 kg apel dan 2 kg jeruk seharga Rp65.000. Budi membeli 1 kg apel dan 4 kg jeruk seharga Rp55.000. Berapakah harga 1 kg apel (x)?',
+                math: 'Model Matematika:\n(1) 3x + 2y = 65.000\n(2) x + 4y = 55.000',
+                options: [
+                    { text: 'Rp15.000', isCorrect: true },
+                    { text: 'Rp12.000', isCorrect: false },
+                    { text: 'Rp10.000', isCorrect: false },
+                    { text: 'Rp18.000', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (2): x = 55.000 - 4y\n2. Substitusi x ke pers (1):\n   3(55.000 - 4y) + 2y = 65.000\n   165.000 - 12y + 2y = 65.000\n   -10y = -100.000 -> y = 10.000\n3. x = 55.000 - 4(10.000) = 15.000\nJadi, harga 1 kg apel = Rp15.000.'
+            },
+            {
+                id: 22,
+                type: 'Soal Cerita',
+                question: 'Jumlah dua buah bilangan adalah 35. Bilangan pertama (x) sama dengan 4 kali bilangan kedua (y). Berapakah selisih kedua bilangan tersebut (x - y)?',
+                math: 'Model Matematika:\n(1) x + y = 35\n(2) x = 4y',
+                options: [
+                    { text: '21', isCorrect: true },
+                    { text: '18', isCorrect: false },
+                    { text: '24', isCorrect: false },
+                    { text: '28', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Substitusi x = 4y ke pers (1):\n   4y + y = 35\n   5y = 35 -> y = 7\n2. x = 4(7) = 28\n3. Selisih = x - y = 28 - 7 = 21.'
+            },
+            {
+                id: 23,
+                type: 'Soal Cerita',
+                question: 'Seseorang membeli 2 kemeja dan 3 kaos seharga Rp280.000. Di toko yang sama, ia membeli 1 kemeja dan 1 kaos seharga Rp110.000. Berapakah harga 1 kemeja (x)?',
+                math: 'Model Matematika:\n(1) 2x + 3y = 280.000\n(2) x + y = 110.000',
+                options: [
+                    { text: 'Rp50.000', isCorrect: true },
+                    { text: 'Rp40.000', isCorrect: false },
+                    { text: 'Rp45.000', isCorrect: false },
+                    { text: 'Rp60.000', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (2): y = 110.000 - x\n2. Substitusi y ke pers (1):\n   2x + 3(110.000 - x) = 280.000\n   2x + 330.000 - 3x = 280.000\n   -x = -50.000 -> x = 50.000\nJadi, harga 1 kemeja = Rp50.000.'
+            },
+            {
+                id: 24,
+                type: 'Soal Cerita',
+                question: 'Di sebuah peternakan terdapat ayam (x) dan kambing (y). Jumlah seluruh hewan adalah 25 ekor dan total kaki seluruh hewan adalah 70 kaki. Berapakah jumlah kambing di peternakan tersebut?',
+                math: 'Model Matematika:\n(1) x + y = 25\n(2) 2x + 4y = 70',
+                options: [
+                    { text: '10 ekor', isCorrect: true },
+                    { text: '15 ekor', isCorrect: false },
+                    { text: '12 ekor', isCorrect: false },
+                    { text: '8 ekor', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (1): x = 25 - y\n2. Substitusi x ke pers (2):\n   2(25 - y) + 4y = 70\n   50 - 2y + 4y = 70\n   2y = 20 -> y = 10\nJadi, jumlah kambing (y) = 10 ekor.'
+            },
+            {
+                id: 25,
+                type: 'Soal Cerita',
+                question: 'Dua kali umur Ani (x) ditambah umur Boni (y) adalah 26 tahun. Jika umur Boni 5 tahun lebih tua dari Ani (y = x + 5), berapakah umur Ani saat ini?',
+                math: 'Model Matematika:\n(1) 2x + y = 26\n(2) y = x + 5',
+                options: [
+                    { text: '7 tahun', isCorrect: true },
+                    { text: '8 tahun', isCorrect: false },
+                    { text: '9 tahun', isCorrect: false },
+                    { text: '10 tahun', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Substitusi y = x + 5 ke pers (1):\n   2x + (x + 5) = 26\n   3x + 5 = 26\n   3x = 21 -> x = 7\nJadi, umur Ani adalah 7 tahun.'
+            },
+            {
+                id: 26,
+                type: 'Soal Cerita',
+                question: 'Harga 4 tiket dewasa (x) dan 2 tiket anak-anak (y) adalah Rp140.000. Harga 1 tiket dewasa dan 3 tiket anak-anak adalah Rp85.000. Berapakah harga 1 tiket dewasa?',
+                math: 'Model Matematika:\n(1) 4x + 2y = 140.000\n(2) x + 3y = 85.000',
+                options: [
+                    { text: 'Rp25.000', isCorrect: true },
+                    { text: 'Rp20.000', isCorrect: false },
+                    { text: 'Rp30.000', isCorrect: false },
+                    { text: 'Rp35.000', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (2): x = 85.000 - 3y\n2. Substitusi x ke pers (1):\n   4(85.000 - 3y) + 2y = 140.000\n   340.000 - 12y + 2y = 140.000\n   -10y = -200.000 -> y = 20.000\n3. x = 85.000 - 3(20.000) = 25.000\nJadi, harga 1 tiket dewasa = Rp25.000.'
+            },
+            {
+                id: 27,
+                type: 'Soal Cerita',
+                question: 'Dua buah sudut x dan y saling berpelurus (jumlah kedua sudutnya 180°). Jika selisih besar kedua sudut tersebut adalah 40°, berapakah besar sudut x yang lebih besar?',
+                math: 'Model Matematika:\n(1) x + y = 180\n(2) x - y = 40',
+                options: [
+                    { text: '110°', isCorrect: true },
+                    { text: '100°', isCorrect: false },
+                    { text: '105°', isCorrect: false },
+                    { text: '120°', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (2): x = y + 40\n2. Substitusi x ke pers (1):\n   (y + 40) + y = 180\n   2y + 40 = 180 -> 2y = 140 -> y = 70°\n3. x = 70° + 40° = 110°\nJadi, sudut yang lebih besar adalah 110°.'
+            },
+            {
+                id: 28,
+                type: 'Soal Cerita',
+                question: 'Rina membeli 5 porsi bakso dan 2 es teh manis seharga Rp54.000. Siska membeli 2 porsi bakso dan 1 es teh manis seharga Rp23.000. Berapakah harga 1 es teh manis (y)?',
+                math: 'Model Matematika:\n(1) 5x + 2y = 54.000\n(2) 2x + y = 23.000',
+                options: [
+                    { text: 'Rp7.000', isCorrect: true },
+                    { text: 'Rp5.000', isCorrect: false },
+                    { text: 'Rp6.000', isCorrect: false },
+                    { text: 'Rp8.000', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (2): y = 23.000 - 2x\n2. Substitusi y ke pers (1):\n   5x + 2(23.000 - 2x) = 54.000\n   5x + 46.000 - 4x = 54.000\n   x = 8.000 (harga bakso)\n3. y = 23.000 - 2(8.000) = 7.000\nJadi, harga 1 es teh manis = Rp7.000.'
+            },
+            {
+                id: 29,
+                type: 'Soal Cerita',
+                question: 'Sebuah toko buku menawarkan dua paket: Paket A (3 pulpen + 2 pensil) seharga Rp13.000, dan Paket B (1 pulpen + 4 pensil) seharga Rp11.000. Berapakah harga 1 pulpen (x)?',
+                math: 'Model Matematika:\n(1) 3x + 2y = 13.000\n(2) x + 4y = 11.000',
+                options: [
+                    { text: 'Rp3.000', isCorrect: true },
+                    { text: 'Rp2.500', isCorrect: false },
+                    { text: 'Rp2.000', isCorrect: false },
+                    { text: 'Rp3.500', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Dari pers (2): x = 11.000 - 4y\n2. Substitusi x ke pers (1):\n   3(11.000 - 4y) + 2y = 13.000\n   33.000 - 12y + 2y = 13.000\n   -10y = -20.000 -> y = 2.000 (pensil)\n3. x = 11.000 - 4(2.000) = 3.000\nJadi, harga 1 pulpen = Rp3.000.'
+            },
+            {
+                id: 30,
+                type: 'Soal Cerita',
+                question: 'Jumlah dua buah bilangan cacah adalah 45. Bilangan yang besar (x) nilainya 3 lebihnya dari dua kali bilangan yang kecil (y). Berapakah nilai bilangan yang kecil (y)?',
+                math: 'Model Matematika:\n(1) x + y = 45\n(2) x = 2y + 3',
+                options: [
+                    { text: '14', isCorrect: true },
+                    { text: '12', isCorrect: false },
+                    { text: '16', isCorrect: false },
+                    { text: '31', isCorrect: false }
+                ],
+                explanation: 'Langkah Substitusi:\n1. Substitusi x = 2y + 3 ke pers (1):\n   (2y + 3) + y = 45\n   3y + 3 = 45\n   3y = 42 -> y = 14\nJadi, bilangan yang kecil (y) adalah 14.'
+            }
+        ];
+
+        /* ==========================================================================
+           2. SHUFFLE LOGIC & STATE MANAGEMENT
+           ========================================================================== */
+        // Fisher-Yates Shuffle Algorithm
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        const LOCAL_STORAGE_ANSWERS = 'spldv_quiz_user_answers_v2';
+        const LOCAL_STORAGE_SHUFFLED = 'spldv_quiz_shuffled_questions_v2';
+
+        let processedQuestions = [];
+        let currentIndex = 0;
+        let userAnswers = {}; // Format: { 1: { selectedText: '...', isCorrect: true }, ... }
+        let currentFilter = 'all';
+
+        // Prepare or retrieve shuffled options
+        function initQuestionsData() {
+            try {
+                const savedShuffled = localStorage.getItem(LOCAL_STORAGE_SHUFFLED);
+                if (savedShuffled) {
+                    processedQuestions = JSON.parse(savedShuffled);
+                } else {
+                    processedQuestions = rawQuestions.map(q => {
+                        const shuffledOpts = shuffleArray(q.options);
+                        const labels = ['A', 'B', 'C', 'D'];
+                        const formattedOpts = shuffledOpts.map((opt, idx) => ({
+                            label: labels[idx],
+                            text: opt.text,
+                            isCorrect: opt.isCorrect
+                        }));
+
+                        return {
+                            ...q,
+                            options: formattedOpts
+                        };
+                    });
+                    localStorage.setItem(LOCAL_STORAGE_SHUFFLED, JSON.stringify(processedQuestions));
+                }
+            } catch (e) {
+                console.error("Gagal mengelola memori acak opsi", e);
+                processedQuestions = rawQuestions.map(q => ({
+                    ...q,
+                    options: q.options.map((opt, i) => ({ label: ['A','B','C','D'][i], ...opt }))
+                }));
+            }
+        }
+
+        // Load persisted user answers
+        function loadSavedState() {
+            try {
+                const savedAnswers = localStorage.getItem(LOCAL_STORAGE_ANSWERS);
+                if (savedAnswers) {
+                    userAnswers = JSON.parse(savedAnswers);
+                }
+            } catch (e) {
+                console.error("Gagal membaca jawaban pengguna", e);
+            }
+        }
+
+        function saveAnswersState() {
+            try {
+                localStorage.setItem(LOCAL_STORAGE_ANSWERS, JSON.stringify(userAnswers));
+            } catch (e) {
+                console.error("Gagal menyimpan jawaban pengguna", e);
+            }
+        }
+
+        // Initialize Quiz Application
+        function initApp() {
+            initQuestionsData();
+            loadSavedState();
+            renderNavGrid();
+            renderQuestion(currentIndex);
+            updateHeaderStats();
+        }
+
+        // Render Navigation Grid Buttons (1-30)
+        function renderNavGrid() {
+            const gridEl = document.getElementById('nav-grid');
+            gridEl.innerHTML = '';
+
+            processedQuestions.forEach((q, idx) => {
+                const ans = userAnswers[q.id];
+                let btnColor = 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-300';
+                
+                if (ans) {
+                    if (ans.isCorrect) {
+                        btnColor = 'bg-emerald-500 text-white font-bold border-emerald-600 shadow-sm';
+                    } else {
+                        btnColor = 'bg-rose-500 text-white font-bold border-rose-600 shadow-sm';
+                    }
+                }
+
+                // Apply active filter
+                let isHidden = false;
+                if (currentFilter === 'unanswered' && ans) isHidden = true;
+                if (currentFilter === 'correct' && (!ans || !ans.isCorrect)) isHidden = true;
+                if (currentFilter === 'wrong' && (!ans || ans.isCorrect)) isHidden = true;
+
+                const isCurrent = idx === currentIndex;
+                const activeRing = isCurrent ? 'ring-2 ring-offset-1 ring-indigo-600 z-10 font-black' : '';
+
+                const btn = document.createElement('button');
+                btn.className = `py-2 rounded-lg text-xs border transition-all ${btnColor} ${activeRing} ${isHidden ? 'hidden' : 'block'}`;
+                btn.innerText = q.id;
+                btn.onclick = () => jumpToQuestion(idx);
+                gridEl.appendChild(btn);
+            });
+        }
+
+        // Render Active Question
+        function renderQuestion(index) {
+            currentIndex = index;
+            const q = processedQuestions[index];
+            const ans = userAnswers[q.id];
+
+            // Question Badge & Type
+            document.getElementById('question-number-badge').innerText = `Soal ${q.id} dari 30`;
+            document.getElementById('question-type-badge').innerText = q.type;
+
+            // Header Status Badge
+            const statusIcon = document.getElementById('status-icon-indicator');
+            if (ans) {
+                statusIcon.classList.remove('hidden');
+                if (ans.isCorrect) {
+                    statusIcon.innerHTML = `<span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-md border border-emerald-300 flex items-center space-x-1 shadow-sm"><i class="fa-solid fa-circle-check text-emerald-600"></i><span>Benar</span></span>`;
+                } else {
+                    statusIcon.innerHTML = `<span class="bg-rose-100 text-rose-800 text-xs font-bold px-2.5 py-1 rounded-md border border-rose-300 flex items-center space-x-1 shadow-sm"><i class="fa-solid fa-circle-xmark text-rose-600"></i><span>Salah</span></span>`;
+                }
+            } else {
+                statusIcon.classList.add('hidden');
+            }
+
+            // Text & Math Box
+            document.getElementById('question-text').innerText = q.question;
+            const mathBox = document.getElementById('question-math-box');
+            if (q.math) {
+                mathBox.innerText = q.math;
+                mathBox.classList.remove('hidden');
+            } else {
+                mathBox.classList.add('hidden');
+            }
+
+            // Options Container
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            q.options.forEach(opt => {
+                const optBtn = document.createElement('button');
+                optBtn.className = `w-full text-left p-3.5 rounded-xl border transition-all flex items-start space-x-3 text-xs md:text-sm `;
+
+                let stateStyle = 'bg-white hover:bg-indigo-50/60 border-slate-200 text-slate-800 shadow-sm';
+                let iconClass = 'bg-slate-100 text-slate-700 border border-slate-300';
+
+                if (ans) {
+                    // Post-answer formatting
+                    if (opt.isCorrect) {
+                        stateStyle = 'bg-emerald-50 border-emerald-500 text-emerald-900 font-semibold ring-1 ring-emerald-500 shadow-sm';
+                        iconClass = 'bg-emerald-500 text-white border-emerald-600';
+                    } else if (opt.text === ans.selectedText && !ans.isCorrect) {
+                        stateStyle = 'bg-rose-50 border-rose-500 text-rose-900 font-semibold ring-1 ring-rose-500 shadow-sm';
+                        iconClass = 'bg-rose-500 text-white border-rose-600';
+                    } else {
+                        stateStyle = 'bg-slate-50 border-slate-200 text-slate-400 opacity-60';
+                        iconClass = 'bg-slate-200 text-slate-400 border-slate-300';
+                    }
+                }
+
+                optBtn.className += stateStyle;
+                optBtn.innerHTML = `
+                    <span class="w-6 h-6 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 ${iconClass}">${opt.label}</span>
+                    <span class="mt-0.5 leading-relaxed">${opt.text}</span>
+                `;
+
+                if (!ans) {
+                    optBtn.onclick = () => selectAnswer(q.id, opt);
+                } else {
+                    optBtn.disabled = true;
+                }
+
+                optionsContainer.appendChild(optBtn);
+            });
+
+            // Explanation Box
+            const expCard = document.getElementById('explanation-card');
+            const expText = document.getElementById('explanation-text');
+            if (ans) {
+                expText.innerText = q.explanation;
+                expCard.classList.remove('hidden');
+            } else {
+                expCard.classList.add('hidden');
+            }
+
+            // Controls
+            document.getElementById('btn-prev').disabled = index === 0;
+            document.getElementById('btn-next').disabled = index === processedQuestions.length - 1;
+
+            renderNavGrid();
+        }
+
+        // Answer Selection
+        function selectAnswer(questionId, selectedOpt) {
+            userAnswers[questionId] = {
+                selectedText: selectedOpt.text,
+                selectedLabel: selectedOpt.label,
+                isCorrect: selectedOpt.isCorrect,
+                timestamp: new Date().toISOString()
+            };
+
+            saveAnswersState();
+            updateHeaderStats();
+            renderQuestion(currentIndex);
+        }
+
+        function jumpToQuestion(index) {
+            if (index >= 0 && index < processedQuestions.length) {
+                renderQuestion(index);
+            }
+        }
+
+        function prevQuestion() {
+            if (currentIndex > 0) jumpToQuestion(currentIndex - 1);
+        }
+
+        function nextQuestion() {
+            if (currentIndex < processedQuestions.length - 1) jumpToQuestion(currentIndex + 1);
+        }
+
+        function setFilter(filterType) {
+            currentFilter = filterType;
+            ['all', 'unanswered', 'correct', 'wrong'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if (f === filterType) {
+                    btn.className = 'flex-1 py-1 text-center rounded bg-white text-indigo-700 shadow-sm font-bold';
+                } else {
+                    btn.className = 'flex-1 py-1 text-center rounded hover:text-slate-900 transition';
+                }
+            });
+            renderNavGrid();
+        }
+
+        // Header statistics
+        function updateHeaderStats() {
+            const total = processedQuestions.length;
+            const answeredKeys = Object.keys(userAnswers);
+            const countAnswered = answeredKeys.length;
+            
+            let countCorrect = 0;
+            let countWrong = 0;
+
+            answeredKeys.forEach(k => {
+                if (userAnswers[k].isCorrect) countCorrect++;
+                else countWrong++;
+            });
+
+            document.getElementById('header-correct').innerText = countCorrect;
+            document.getElementById('header-wrong').innerText = countWrong;
+            document.getElementById('header-progress').innerText = `${countAnswered}/${total}`;
+
+            const percent = Math.round((countAnswered / total) * 100);
+            document.getElementById('completion-badge').innerText = `${percent}%`;
+            document.getElementById('progress-bar-fill').style.width = `${percent}%`;
+        }
+
+        // Reset Modal Handlers
+        function openResetModal() {
+            document.getElementById('reset-modal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('reset-modal').classList.add('hidden');
+        }
+
+        function executeReset() {
+            userAnswers = {};
+            localStorage.removeItem(LOCAL_STORAGE_ANSWERS);
+            localStorage.removeItem(LOCAL_STORAGE_SHUFFLED);
+            closeResetModal();
+            
+            // Re-initialize app with fresh random options shuffle
+            initApp();
+        }
+
+        // DOM Loaded
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
